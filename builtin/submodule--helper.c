@@ -1053,7 +1053,8 @@ static void generate_submodule_summary(struct summary_cb *info,
 	char *displaypath;
 	int errmsg = 0;
 	int total_commits = -1;
-	char *sm_git_dir = xstrfmt("%s/.git", p->sm_path);
+	const struct submodule *sub = submodule_from_path(the_repository, &null_oid, p->sm_path);
+	char *sm_git_dir = xstrfmt("%s/.git", sub->url);
 	int is_sm_git_dir = 0;
 
 	if (!info->cached && !oidcmp(&p->oid_dst, &null_oid)) {
@@ -1172,7 +1173,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 			const char *value;
 			const struct submodule *sub = submodule_from_path(the_repository, &null_oid, p->sm_path);
 
-			if (sub && p->status != 'A') {
+			if (sub) {
 				config_key = xstrfmt("submodule.%s.ignore",
 						     sub->name);
 				if (!git_config_get_string_const(config_key, &value))
@@ -1181,7 +1182,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 					ignore_config = sub->ignore;
 
 				free(config_key);
-				if (!strcmp(ignore_config, "all"))
+				if (p->status != 'A' && !strcmp(ignore_config, "all"))
 					continue;
 			}
 		}
