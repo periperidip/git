@@ -1056,7 +1056,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	int is_sm_git_dir = 0;
 	struct strbuf sm_git_dir_sb = STRBUF_INIT;
 
-	if (!info->cached && !oidcmp(&p->oid_dst, &null_oid)) {
+	if (!info->cached && oideq(&p->oid_dst, &null_oid)) {
 		if (S_ISGITLINK(p->mod_dst)) {
 			/*
 			 * NEEDSWORK: avoid using separate process with
