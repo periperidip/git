@@ -960,7 +960,8 @@ enum diff_cmd {
 	DIFF_FILES
 };
 
-static int verify_submodule_object_name(const char *sm_path, const char *sha1)
+static int verify_submodule_object_name(const char *sm_path,
+					  const char *sha1)
 {
 	struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
 
@@ -978,9 +979,10 @@ static int verify_submodule_object_name(const char *sm_path, const char *sha1)
 	return 0;
 }
 
-static void print_submodule_summary(struct summary_cb *info, int errmsg, int total_commits,
-			  int missing_src, int missing_dst, const char *displaypath,
-			  int is_sm_git_dir, struct module_cb *p)
+static void print_submodule_summary(struct summary_cb *info, int errmsg,
+				      int total_commits, int missing_src,
+				      int missing_dst, const char *displaypath,
+				      int is_sm_git_dir, struct module_cb *p)
 {
 	if (p->status == 'T') {
 		if (S_ISGITLINK(p->mod_dst))
@@ -992,8 +994,9 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg, int tot
 				 displaypath, find_unique_abbrev(&p->oid_src, 7),
 				 find_unique_abbrev(&p->oid_dst, 7));
 	} else {
-			printf("* %s %s...%s", displaypath, find_unique_abbrev(&p->oid_src, 7),
-				 find_unique_abbrev(&p->oid_dst, 7));
+			printf("* %s %s...%s",
+			       displaypath, find_unique_abbrev(&p->oid_src, 7),
+			       find_unique_abbrev(&p->oid_dst, 7));
 	}
 
 	if (total_commits < 0)
@@ -1009,13 +1012,14 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg, int tot
 		if (S_ISGITLINK(p->mod_src)) {
 			if (missing_src && missing_dst) {
 				printf(_("  Warn: %s doesn't contain commits %s and %s\n"),
-				 displaypath, oid_to_hex(&p->oid_src), oid_to_hex(&p->oid_dst));
+					 displaypath, oid_to_hex(&p->oid_src),
+					 oid_to_hex(&p->oid_dst));
 			} else if (missing_src) {
 				printf(_("  Warn: %s doesn't contain commit %s\n"),
-				 displaypath, oid_to_hex(&p->oid_src));
+					 displaypath, oid_to_hex(&p->oid_src));
 			} else {
 				printf(_("  Warn: %s doesn't contain commit %s\n"),
-				 displaypath, oid_to_hex(&p->oid_dst));
+					 displaypath, oid_to_hex(&p->oid_dst));
 			}
 		}
 	} else if (is_sm_git_dir) {
@@ -1028,11 +1032,14 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg, int tot
 
 		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst)) {
 			if (info->summary_limit > 0)
-				argv_array_pushf(&cp_log.args, "-%d", info->summary_limit);
+				argv_array_pushf(&cp_log.args, "-%d",
+						 info->summary_limit);
 
 			argv_array_pushl(&cp_log.args, "--pretty=  %m %s",
 					 "--first-parent", NULL);
-			argv_array_pushf(&cp_log.args, "%s...%s", oid_to_hex(&p->oid_src), oid_to_hex(&p->oid_dst));
+			argv_array_pushf(&cp_log.args, "%s...%s",
+					 oid_to_hex(&p->oid_src),
+					 oid_to_hex(&p->oid_dst));
 		} else if (S_ISGITLINK(p->mod_dst)) {
 			argv_array_pushl(&cp_log.args, "--pretty=  > %s",
 					 "-1", oid_to_hex(&p->oid_dst), NULL);
@@ -1070,11 +1077,10 @@ static void generate_submodule_summary(struct summary_cb *info,
 			cp_rev_parse.dir = p->sm_path;
 			prepare_submodule_repo_env(&cp_rev_parse.env_array);
 
-			argv_array_pushl(&cp_rev_parse.args,
-					 "rev-parse", "HEAD", NULL);
+			argv_array_pushl(&cp_rev_parse.args, "rev-parse",
+					 "HEAD", NULL);
 			if (!capture_command(&cp_rev_parse, &sb_rev_parse, 0)) {
 				strbuf_strip_suffix(&sb_rev_parse, "\n");
-
 				get_oid_hex(sb_rev_parse.buf, &p->oid_dst);
 			}
 			strbuf_release(&sb_rev_parse);
@@ -1083,13 +1089,11 @@ static void generate_submodule_summary(struct summary_cb *info,
 			struct strbuf sb_hash_object = STRBUF_INIT;
 
 			cp_hash_object.git_cmd = 1;
-			argv_array_pushl(&cp_hash_object.args,
-					 "hash-object", p->sm_path,
-					 NULL);
+			argv_array_pushl(&cp_hash_object.args, "hash-object",
+					 p->sm_path, NULL);
 			if (!capture_command(&cp_hash_object,
 					     &sb_hash_object, 0)) {
 				strbuf_strip_suffix(&sb_hash_object, "\n");
-
 				get_oid_hex(sb_hash_object.buf, &p->oid_dst);
 			}
 			strbuf_release(&sb_hash_object);
@@ -1120,7 +1124,8 @@ static void generate_submodule_summary(struct summary_cb *info,
 			char *range;
 
 			if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst))
-				range = xstrfmt("%s...%s", oid_to_hex(&p->oid_src), oid_to_hex(&p->oid_dst));
+				range = xstrfmt("%s...%s", oid_to_hex(&p->oid_src),
+						oid_to_hex(&p->oid_dst));
 			else if (S_ISGITLINK(p->mod_src))
 				range = xstrdup(oid_to_hex(&p->oid_src));
 			else
@@ -1147,8 +1152,9 @@ static void generate_submodule_summary(struct summary_cb *info,
 		errmsg = 1;
 	}
 
-	print_submodule_summary(info, errmsg, total_commits, missing_src, missing_dst,
-		      displaypath, is_sm_git_dir, p);
+	print_submodule_summary(info, errmsg, total_commits,
+				missing_src, missing_dst,
+		      		displaypath, is_sm_git_dir, p);
 
 	free(displaypath);
 	strbuf_release(&sm_git_dir_sb);
@@ -1171,7 +1177,9 @@ static void prepare_submodule_summary(struct summary_cb *info,
 			char *config_key;
 			const char *ignore_config = "none";
 			const char *value;
-			const struct submodule *sub = submodule_from_path(the_repository, &null_oid, p->sm_path);
+			const struct submodule *sub = submodule_from_path(the_repository,
+									  &null_oid,
+									  p->sm_path);
 
 			if (sub && p->status != 'A') {
 				config_key = xstrfmt("submodule.%s.ignore",
@@ -1235,7 +1243,9 @@ static const char *get_diff_cmd(enum diff_cmd diff_cmd)
 	}
 }
 
-static int compute_summary_module_list(char *head, struct summary_cb *info, enum diff_cmd diff_cmd)
+static int compute_summary_module_list(char *head,
+				         struct summary_cb *info,
+				         enum diff_cmd diff_cmd)
 {
 	struct argv_array diff_args = ARGV_ARRAY_INIT;
 	struct rev_info rev;
@@ -1298,15 +1308,19 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 
 	struct option module_summary_options[] = {
 		OPT__QUIET(&quiet, N_("Suppress output of summarising submodules")),
-		OPT_BOOL(0, "cached", &cached, N_("Use the commit stored in the index instead of the submodule HEAD")),
-		OPT_BOOL(0, "files", &files, N_("To compare the commit in the index with that in the submodule HEAD")),
-		OPT_BOOL(0, "for-status", &for_status, N_("Skip submodules with 'ignore_config' value set to 'all'")),
-		OPT_INTEGER('n', "summary-limit", &summary_limit, N_("Limit the summary size")),
+		OPT_BOOL(0, "cached", &cached,
+			N_("Use the commit stored in the index instead of the submodule HEAD")),
+		OPT_BOOL(0, "files", &files,
+			N_("To compare the commit in the index with that in the submodule HEAD")),
+		OPT_BOOL(0, "for-status", &for_status,
+			N_("Skip submodules with 'ignore_config' value set to 'all'")),
+		OPT_INTEGER('n', "summary-limit", &summary_limit,
+			N_("Limit the summary size")),
 		OPT_END()
 	};
 
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper summary [<options>] [--] [<path>]"),
+		N_("git submodule--helper summary [<options>] [commit] [--] [<path>]"),
 		NULL
 	};
 
@@ -1330,7 +1344,8 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 		/* before the first commit: compare with an empty tree */
 		struct stat st;
 		struct object_id oid;
-		if (fstat(0, &st) < 0 || index_fd(&the_index, &oid, 0, &st, 2, prefix, 3))
+		if (fstat(0, &st) < 0 || index_fd(&the_index, &oid, 0, &st, 2,
+						  prefix, 3))
 			die("Unable to add %s to database", oid.hash);
 		strbuf_addstr(&sb, oid_to_hex(&oid));
 		if (argc) {
@@ -1343,7 +1358,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 
 	if (files) {
 		if (cached)
-			die(_("The --cached option cannot be used with the --files option"));
+			die(_("--cached and --files are mutually exclusive"));
 		diff_cmd = DIFF_FILES;
 	}
 
@@ -1356,7 +1371,8 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	info.files = files;
 	info.summary_limit = summary_limit;
 
-	ret = compute_summary_module_list(diff_cmd ? NULL : sb.buf, &info, diff_cmd);
+	ret = compute_summary_module_list(diff_cmd ? NULL : sb.buf,
+					  &info, diff_cmd);
 	strbuf_release(&sb);
 	return ret;
 }
