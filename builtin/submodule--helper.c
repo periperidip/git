@@ -955,10 +955,10 @@ struct summary_cb {
 };
 #define SUMMARY_CB_INIT { 0, NULL, NULL, 0, 0, 0, 0, 0 }
 
-static enum {
+enum diff_cmd {
 	DIFF_INDEX,
 	DIFF_FILES
-} diff_cmd = DIFF_INDEX;
+};
 
 static int verify_submodule_object_name(const char *sm_path, const char *sha1)
 {
@@ -1226,13 +1226,22 @@ static void submodule_summary_callback(struct diff_queue_struct *q,
 	}
 }
 
-static int compute_summary_module_list(char *head, struct summary_cb *info)
+static const char *get_diff_cmd(enum diff_cmd diff_cmd)
+{
+	switch (diff_cmd) {
+	case DIFF_INDEX: return "diff-index";
+	case DIFF_FILES: return "diff-files";
+	default: BUG("bad diff_cmd value %d", diff_cmd);
+	}
+}
+
+static int compute_summary_module_list(char *head, struct summary_cb *info, enum diff_cmd diff_cmd)
 {
 	struct argv_array diff_args = ARGV_ARRAY_INIT;
 	struct rev_info rev;
 	struct module_cb_list list = MODULE_CB_LIST_INIT;
 
-	argv_array_push(&diff_args, diff_cmd ? "diff-files" : "diff-index");
+	argv_array_push(&diff_args, get_diff_cmd(diff_cmd));
 	if (info->cached)
 		argv_array_push(&diff_args, "--cached");
 	argv_array_pushl(&diff_args, "--ignore-submodules=dirty", "--raw",
@@ -1255,7 +1264,7 @@ static int compute_summary_module_list(char *head, struct summary_cb *info)
 	rev.diffopt.format_callback_data = &list;
 
 	if (!info->cached) {
-		if (!diff_cmd)
+		if (diff_cmd ==  DIFF_INDEX)
 			setup_work_tree();
 		if (read_cache_preload(&rev.diffopt.pathspec) < 0) {
 			perror("read_cache_preload");
@@ -1266,7 +1275,7 @@ static int compute_summary_module_list(char *head, struct summary_cb *info)
 		return -1;
 	}
 
-	if (!diff_cmd)
+	if (diff_cmd == DIFF_INDEX)
 		run_diff_index(&rev, info->cached);
 	else
 		run_diff_files(&rev, 0);
@@ -1284,6 +1293,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	int summary_limit = -1;
 	struct child_process cp_rev = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
+	enum diff_cmd diff_cmd = DIFF_INDEX;
 	int ret;
 
 	struct option module_summary_options[] = {
@@ -1334,7 +1344,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	if (files) {
 		if (cached)
 			die(_("The --cached option cannot be used with the --files option"));
-		diff_cmd++;
+		diff_cmd = DIFF_FILES;
 	}
 
 	info.argc = argc;
@@ -1346,7 +1356,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	info.files = files;
 	info.summary_limit = summary_limit;
 
-	ret = compute_summary_module_list(diff_cmd ? NULL : sb.buf, &info);
+	ret = compute_summary_module_list((diff_cmd == DIFF_FILES) ? NULL : sb.buf, &info, diff_cmd);
 	strbuf_release(&sb);
 	return ret;
 }
