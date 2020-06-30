@@ -951,7 +951,7 @@ struct summary_cb {
 	unsigned int for_status: 1;
 	unsigned int quiet: 1;
 	unsigned int files: 1;
-	int summary_limits;
+	int summary_limit;
 };
 #define SUMMARY_CB_INIT { 0, NULL, NULL, 0, 0, 0, 0, 0 }
 
@@ -1022,8 +1022,8 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg, int tot
 		argv_array_pushl(&cp_log.args, "log", NULL);
 
 		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst)) {
-			if (info->summary_limits > 0)
-				argv_array_pushf(&cp_log.args, "-%d", info->summary_limits);
+			if (info->summary_limit > 0)
+				argv_array_pushf(&cp_log.args, "-%d", info->summary_limit);
 
 			argv_array_pushl(&cp_log.args, "--pretty=  %m %s",
 					 "--first-parent", NULL);
@@ -1276,18 +1276,18 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	int for_status = 0;
 	int quiet = 0;
 	int files = 0;
-	int summary_limits = -1;
+	int summary_limit = -1;
 	struct child_process cp_rev = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	int diff_cmd = 0;
 	int ret;
 
 	struct option module_summary_options[] = {
-		OPT__QUIET(&quiet, N_("Suppress output for initializing a submodule")),
+		OPT__QUIET(&quiet, N_("Suppress output of summarising submodules")),
 		OPT_BOOL(0, "cached", &cached, N_("Use the commit stored in the index instead of the submodule HEAD")),
-		OPT_BOOL(0, "files", &files, N_("To compares the commit in the index with that in the submodule HEAD")),
-		OPT_BOOL(0, "for-status", &for_status, N_("Skip submodules with 'all' ignore_config value")),
-		OPT_INTEGER('n', "summary-limits", &summary_limits, N_("Limit the summary size")),
+		OPT_BOOL(0, "files", &files, N_("To compare the commit in the index with that in the submodule HEAD")),
+		OPT_BOOL(0, "for-status", &for_status, N_("Skip submodules with 'ignore_config' value set to 'all'")),
+		OPT_INTEGER('n', "summary-limit", &summary_limit, N_("Limit the summary size")),
 		OPT_END()
 	};
 
@@ -1299,7 +1299,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, module_summary_options,
 			     git_submodule_helper_usage, 0);
 
-	if (!summary_limits)
+	if (!summary_limit)
 		return 0;
 
 	cp_rev.git_cmd = 1;
@@ -1340,7 +1340,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	info.for_status = !!for_status;
 	info.quiet = quiet;
 	info.files = files;
-	info.summary_limits = summary_limits;
+	info.summary_limit = summary_limit;
 
 	ret = compute_summary_module_list(diff_cmd ? NULL : sb.buf, &info, diff_cmd);
 	strbuf_release(&sb);
