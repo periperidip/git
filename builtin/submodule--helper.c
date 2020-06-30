@@ -987,8 +987,9 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg, int tot
 				 displaypath, find_unique_abbrev(&p->oid_src, 7),
 				 find_unique_abbrev(&p->oid_dst, 7));
 	} else {
-			printf("* %s %s...%s", displaypath, find_unique_abbrev(&p->oid_src, 7),
-				 find_unique_abbrev(&p->oid_dst, 7));
+			printf("* %s %s...%s", displaypath,
+				find_unique_abbrev(&p->oid_src, 7),
+				find_unique_abbrev(&p->oid_dst, 7));
 	}
 
 	if (total_commits < 0)
@@ -1027,7 +1028,8 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg, int tot
 
 			argv_array_pushl(&cp_log.args, "--pretty=  %m %s",
 					 "--first-parent", NULL);
-			argv_array_pushf(&cp_log.args, "%s...%s", oid_to_hex(&p->oid_src), oid_to_hex(&p->oid_dst));
+			argv_array_pushf(&cp_log.args, "%s...%s", oid_to_hex(&p->oid_src),
+											oid_to_hex(&p->oid_dst));
 		} else if (S_ISGITLINK(p->mod_dst)) {
 			argv_array_pushl(&cp_log.args, "--pretty=  > %s",
 					 "-1", oid_to_hex(&p->oid_dst), NULL);
@@ -1115,7 +1117,8 @@ static void generate_submodule_summary(struct summary_cb *info,
 			char *range;
 
 			if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst))
-				range = xstrfmt("%s...%s", oid_to_hex(&p->oid_src), oid_to_hex(&p->oid_dst));
+				range = xstrfmt("%s...%s", oid_to_hex(&p->oid_src),
+										oid_to_hex(&p->oid_dst));
 			else if (S_ISGITLINK(p->mod_src))
 				range = xstrdup(oid_to_hex(&p->oid_src));
 			else
@@ -1166,7 +1169,8 @@ static void prepare_submodule_summary(struct summary_cb *info,
 			char *config_key;
 			const char *ignore_config = "none";
 			const char *value;
-			const struct submodule *sub = submodule_from_path(the_repository, &null_oid, p->sm_path);
+			const struct submodule *sub = submodule_from_path(the_repository,
+											&null_oid, p->sm_path);
 
 			if (sub && p->status != 'A') {
 				config_key = xstrfmt("submodule.%s.ignore",
@@ -1284,15 +1288,19 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 
 	struct option module_summary_options[] = {
 		OPT__QUIET(&quiet, N_("Suppress output of summarising submodules")),
-		OPT_BOOL(0, "cached", &cached, N_("Use the commit stored in the index instead of the submodule HEAD")),
-		OPT_BOOL(0, "files", &files, N_("To compare the commit in the index with that in the submodule HEAD")),
-		OPT_BOOL(0, "for-status", &for_status, N_("Skip submodules with 'ignore_config' value set to 'all'")),
-		OPT_INTEGER('n', "summary-limit", &summary_limit, N_("Limit the summary size")),
+		OPT_BOOL(0, "cached", &cached,
+			N_("Use the commit stored in the index instead of the submodule HEAD")),
+		OPT_BOOL(0, "files", &files,
+			N_("To compare the commit in the index with that in the submodule HEAD")),
+		OPT_BOOL(0, "for-status", &for_status,
+			N_("Skip submodules with 'ignore_config' value set to 'all'")),
+		OPT_INTEGER('n', "summary-limit", &summary_limit,
+			N_("Limit the summary size")),
 		OPT_END()
 	};
 
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper summary [<options>] [--] [<path>]"),
+		N_("git submodule--helper summary [<options>] [commit] [--] [<path>]"),
 		NULL
 	};
 
@@ -1316,7 +1324,8 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 		/* before the first commit: compare with an empty tree */
 		struct stat st;
 		struct object_id oid;
-		if (fstat(0, &st) < 0 || index_fd(&the_index, &oid, 0, &st, 2, prefix, 3))
+		if (fstat(0, &st) < 0 || index_fd(&the_index, &oid, 0, &st, 2,
+										prefix, 3))
 			die("Unable to add %s to database", oid.hash);
 		strbuf_addstr(&sb, oid_to_hex(&oid));
 		if (argc) {
@@ -1329,7 +1338,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 
 	if (files) {
 		if (cached)
-			die(_("The --cached option cannot be used with the --files option"));
+			die(_("--cached and --files are mutually exclusive"));
 		diff_cmd = 1;
 	}
 
@@ -1342,7 +1351,8 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	info.files = files;
 	info.summary_limit = summary_limit;
 
-	ret = compute_summary_module_list(diff_cmd ? NULL : sb.buf, &info, diff_cmd);
+	ret = compute_summary_module_list(diff_cmd ? NULL : sb.buf,
+										&info, diff_cmd);
 	strbuf_release(&sb);
 	return ret;
 }
