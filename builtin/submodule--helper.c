@@ -955,11 +955,6 @@ struct summary_cb {
 };
 #define SUMMARY_CB_INIT { 0, NULL, NULL, 0, 0, 0, 0, 0 }
 
-static enum {
-	DIFF_INDEX,
-	DIFF_FILES
-} diff_cmd = DIFF_INDEX;
-
 static int verify_submodule_object_name(const char *sm_path, const char *sha1)
 {
 	struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
@@ -1226,7 +1221,7 @@ static void submodule_summary_callback(struct diff_queue_struct *q,
 	}
 }
 
-static int compute_summary_module_list(char *head, struct summary_cb *info)
+static int compute_summary_module_list(char *head, struct summary_cb *info, int diff_cmd)
 {
 	struct argv_array diff_args = ARGV_ARRAY_INIT;
 	struct rev_info rev;
@@ -1284,6 +1279,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	int summary_limits = -1;
 	struct child_process cp_rev = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
+	int diff_cmd = 0;
 	int ret;
 
 	struct option module_summary_options[] = {
@@ -1334,7 +1330,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	if (files) {
 		if (cached)
 			die(_("The --cached option cannot be used with the --files option"));
-		diff_cmd++;
+		diff_cmd = 1;
 	}
 
 	info.argc = argc;
@@ -1346,7 +1342,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	info.files = files;
 	info.summary_limits = summary_limits;
 
-	ret = compute_summary_module_list(diff_cmd ? NULL : sb.buf, &info);
+	ret = compute_summary_module_list(diff_cmd ? NULL : sb.buf, &info, diff_cmd);
 	strbuf_release(&sb);
 	return ret;
 }
