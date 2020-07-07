@@ -1342,12 +1342,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 		}
 	} else if (!argc || !strcmp(argv[0], "HEAD")) {
 		/* before the first commit: compare with an empty tree */
-		struct stat st;
-		struct object_id oid;
-		if (fstat(0, &st) < 0 || index_fd(&the_index, &oid, 0, &st, 2,
-						  prefix, 3))
-			die("Unable to add %s to database", oid.hash);
-		strbuf_addstr(&sb, oid_to_hex(&oid));
+		strbuf_addstr(&sb, oid_to_hex(the_hash_algo->empty_tree));
 		if (argc) {
 			argv++;
 			argc--;
