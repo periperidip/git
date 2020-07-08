@@ -960,8 +960,8 @@ enum diff_cmd {
 	DIFF_FILES
 };
 
-static int verify_submodule_object_name(const char *sm_path,
-					  const char *sha1)
+static int verify_submodule_committish(const char *sm_path,
+					  const char *committish)
 {
 	struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
 
@@ -971,7 +971,8 @@ static int verify_submodule_object_name(const char *sm_path,
 	prepare_submodule_repo_env(&cp_rev_parse.env_array);
 	argv_array_pushl(&cp_rev_parse.args, "rev-parse", "-q",
 			 "--verify", NULL);
-	argv_array_pushf(&cp_rev_parse.args, "%s^0", sha1);
+	argv_array_pushf(&cp_rev_parse.args, "%s^0", committish);
+	argv_array_push(&cp_rev_parse.args, "--");
 
 	if (run_command(&cp_rev_parse))
 		return 1;
@@ -1108,11 +1109,11 @@ static void generate_submodule_summary(struct summary_cb *info,
 		is_sm_git_dir = 1;
 
 	if (is_sm_git_dir && S_ISGITLINK(p->mod_src))
-		missing_src = verify_submodule_object_name(p->sm_path,
+		missing_src = verify_submodule_committish(p->sm_path,
 							   oid_to_hex(&p->oid_src));
 
 	if (is_sm_git_dir && S_ISGITLINK(p->mod_dst))
-		missing_dst = verify_submodule_object_name(p->sm_path,
+		missing_dst = verify_submodule_committish(p->sm_path,
 							   oid_to_hex(&p->oid_dst));
 
 	displaypath = get_submodule_displaypath(p->sm_path, info->prefix);
