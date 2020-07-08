@@ -960,44 +960,43 @@ enum diff_cmd {
 	DIFF_FILES
 };
 
-static int verify_submodule_committish(const char *sm_path,
-					  const char *committish)
+static char* verify_submodule_committish(const char *sm_path,
+					   const char *committish)
 {
 	struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
+	struct strbuf result = STRBUF_INIT;
 
 	cp_rev_parse.git_cmd = 1;
-	cp_rev_parse.no_stdout = 1;
 	cp_rev_parse.dir = sm_path;
 	prepare_submodule_repo_env(&cp_rev_parse.env_array);
 	argv_array_pushl(&cp_rev_parse.args, "rev-parse", "-q",
-			 "--verify", NULL);
+			 "--verify", "--short=7", NULL);
 	argv_array_pushf(&cp_rev_parse.args, "%s^0", committish);
 	argv_array_push(&cp_rev_parse.args, "--");
 
-	if (run_command(&cp_rev_parse))
-		return 1;
+	if (capture_command(&cp_rev_parse, &result, 0))
+		return NULL;
 
-	return 0;
+	strbuf_trim_trailing_newline(&result);
+	return strbuf_detach(&result, NULL);
 }
 
 static void print_submodule_summary(struct summary_cb *info, int errmsg,
-				      int total_commits, int missing_src,
-				      int missing_dst, const char *displaypath,
-				      int is_sm_git_dir, struct module_cb *p)
+				      int total_commits, const char *displaypath,
+				      int is_sm_git_dir, const char *src_oid_hash,
+				      const char *dst_oid_hash,
+				      struct module_cb *p)
 {
 	if (p->status == 'T') {
 		if (S_ISGITLINK(p->mod_dst))
 			printf(_("* %s %s(blob)->%s(submodule)"),
-				 displaypath, find_unique_abbrev(&p->oid_src, 7),
-				 find_unique_abbrev(&p->oid_dst, 7));
+				 displaypath, src_oid_hash, dst_oid_hash);
 		else
 			printf(_("* %s %s(submodule)->%s(blob)"),
-				 displaypath, find_unique_abbrev(&p->oid_src, 7),
-				 find_unique_abbrev(&p->oid_dst, 7));
+				 displaypath, src_oid_hash, dst_oid_hash);
 	} else {
 		printf("* %s %s...%s",
-			displaypath, find_unique_abbrev(&p->oid_src, 7),
-			find_unique_abbrev(&p->oid_dst, 7));
+			displaypath, src_oid_hash, dst_oid_hash);
 	}
 
 	if (total_commits < 0)
@@ -1011,11 +1010,11 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg,
 		 * submodule, i.e. deleted or changed to blob
 		 */
 		if (S_ISGITLINK(p->mod_src)) {
-			if (missing_src && missing_dst) {
+			if (!src_oid_hash && !dst_oid_hash) {
 				printf(_("  Warn: %s doesn't contain commits %s and %s\n"),
 				       displaypath, oid_to_hex(&p->oid_src),
 				       oid_to_hex(&p->oid_dst));
-			} else if (missing_src) {
+			} else if (!src_oid_hash) {
 				printf(_("  Warn: %s doesn't contain commit %s\n"),
 				       displaypath, oid_to_hex(&p->oid_src));
 			} else {
@@ -1056,9 +1055,7 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg,
 static void generate_submodule_summary(struct summary_cb *info,
 				       struct module_cb *p)
 {
-	int missing_src = 0;
-	int missing_dst = 0;
-	char *displaypath;
+	char *displaypath, *src_oid_hash = NULL, *dst_oid_hash = NULL;
 	int errmsg = 0;
 	int total_commits = -1;
 	int is_sm_git_dir = 0;
@@ -1109,16 +1106,16 @@ static void generate_submodule_summary(struct summary_cb *info,
 		is_sm_git_dir = 1;
 
 	if (is_sm_git_dir && S_ISGITLINK(p->mod_src))
-		missing_src = verify_submodule_committish(p->sm_path,
+		src_oid_hash = verify_submodule_committish(p->sm_path,
 							   oid_to_hex(&p->oid_src));
 
 	if (is_sm_git_dir && S_ISGITLINK(p->mod_dst))
-		missing_dst = verify_submodule_committish(p->sm_path,
+		dst_oid_hash = verify_submodule_committish(p->sm_path,
 							   oid_to_hex(&p->oid_dst));
 
 	displaypath = get_submodule_displaypath(p->sm_path, info->prefix);
 
-	if (!missing_dst && !missing_src) {
+	if (src_oid_hash && dst_oid_hash) {
 		if (is_sm_git_dir) {
 			struct child_process cp_rev_list = CHILD_PROCESS_INIT;
 			struct strbuf sb_rev_list = STRBUF_INIT;
@@ -1149,9 +1146,12 @@ static void generate_submodule_summary(struct summary_cb *info,
 	}
 
 	print_submodule_summary(info, errmsg, total_commits,
-				missing_src, missing_dst,
-		      		displaypath, is_sm_git_dir, p);
+				displaypath, is_sm_git_dir,
+				src_oid_hash, dst_oid_hash,
+				p);
 
+	free(src_oid_hash);
+	free(dst_oid_hash);
 	free(displaypath);
 	strbuf_release(&sm_git_dir_sb);
 }
