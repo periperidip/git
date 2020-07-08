@@ -1172,26 +1172,20 @@ static void prepare_submodule_summary(struct summary_cb *info,
 			continue;
 		}
 
-		if (info->for_status) {
+		if (info->for_status && p->status != 'A') {
 			char *config_key;
-			const char *ignore_config = "none";
 			const char *value;
 			const struct submodule *sub = submodule_from_path(the_repository,
-									  &null_oid,
-									  p->sm_path);
+						      &null_oid, p->sm_path);
 
-			if (sub && p->status != 'A') {
-				config_key = xstrfmt("submodule.%s.ignore",
-						     sub->name);
-				if (!git_config_get_string_const(config_key, &value))
-					ignore_config = value;
-				else if (sub->ignore)
-					ignore_config = sub->ignore;
-
+			config_key = xstrfmt("submodule.%s.ignore",
+						p->sm_path);
+			if (!git_config_get_string_const(config_key, &value) && !strcmp(sub->ignore, "all")) {
 				free(config_key);
-				if (!strcmp(ignore_config, "all"))
-					continue;
+				continue;
 			}
+			else if (sub->ignore && !strcmp(sub->ignore, "all"))
+				continue;
 		}
 
 		/* Also show added or modified modules which are checked out */
