@@ -1127,10 +1127,10 @@ static void generate_submodule_summary(struct summary_cb *info,
 			if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst))
 				range = xstrfmt("%s...%s", oid_to_hex(&p->oid_src),
 						oid_to_hex(&p->oid_dst));
-			else if (S_ISGITLINK(p->mod_src))
-				range = xstrdup(oid_to_hex(&p->oid_src));
 			else
-				range = xstrdup(oid_to_hex(&p->oid_dst));
+				range = xstrdup(S_ISGITLINK(p->mod_src) ?
+						oid_to_hex(&p->oid_src) :
+						oid_to_hex(&p->oid_dst));
 
 			cp_rev_list.git_cmd = 1;
 			cp_rev_list.dir = p->sm_path;
