@@ -980,7 +980,7 @@ static int verify_submodule_committish(const char *sm_path,
 	return 0;
 }
 
-static void print_submodule_summary(struct summary_cb *info, int errmsg,
+static void print_submodule_summary(struct summary_cb *info, char *errmsg,
 				      int total_commits, int missing_src,
 				      int missing_dst, const char *displaypath,
 				      struct module_cb *p)
@@ -1006,23 +1006,7 @@ static void print_submodule_summary(struct summary_cb *info, int errmsg,
 		printf(" (%d):\n", total_commits);
 
 	if (errmsg) {
-		/*
-		 * Don't give error msg for modification whose dst is not
-		 * submodule, i.e. deleted or changed to blob
-		 */
-		if (S_ISGITLINK(p->mod_dst)) {
-			if (missing_src && missing_dst) {
-				printf(_("  Warn: %s doesn't contain commits %s and %s\n"),
-				       displaypath, oid_to_hex(&p->oid_src),
-				       oid_to_hex(&p->oid_dst));
-			} else if (missing_src) {
-				printf(_("  Warn: %s doesn't contain commit %s\n"),
-				       displaypath, oid_to_hex(&p->oid_src));
-			} else {
-				printf(_("  Warn: %s doesn't contain commit %s\n"),
-				       displaypath, oid_to_hex(&p->oid_dst));
-			}
-		}
+		printf(_("%s"), errmsg);
 	} else {
 		struct child_process cp_log = CHILD_PROCESS_INIT;
 
@@ -1059,7 +1043,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	int missing_src = 0;
 	int missing_dst = 0;
 	char *displaypath;
-	int errmsg = 0;
+	char *errmsg = NULL;
 	int total_commits = -1;
 
 	if (!info->cached && oideq(&p->oid_dst, &null_oid)) {
@@ -1113,11 +1097,11 @@ static void generate_submodule_summary(struct summary_cb *info,
 		struct strbuf sb_rev_list = STRBUF_INIT;
 
 		argv_array_pushl(&cp_rev_list.args, "rev-list",
-					"--first-parent", "--count", NULL);
+				 "--first-parent", "--count", NULL);
 		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst))
 			argv_array_pushf(&cp_rev_list.args, "%s...%s",
-						oid_to_hex(&p->oid_src),
-						oid_to_hex(&p->oid_dst));
+					 oid_to_hex(&p->oid_src),
+					 oid_to_hex(&p->oid_dst));
 		else
 			argv_array_push(&cp_rev_list.args,
 					S_ISGITLINK(p->mod_src) ?
@@ -1134,7 +1118,24 @@ static void generate_submodule_summary(struct summary_cb *info,
 
 		strbuf_release(&sb_rev_list);
 	} else {
-		errmsg = 1;
+		if (S_ISGITLINK(p->mod_dst)) {
+			struct strbuf errmsg_str = STRBUF_INIT;
+			/*
+			 * Don't give error msg for modification whose dst is not
+			 * submodule, i.e. deleted or changed to blob
+			 */
+			if (missing_src && missing_dst) {
+				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain commits %s and %s\n",
+					    displaypath, oid_to_hex(&p->oid_src),
+					    oid_to_hex(&p->oid_dst));
+			} else {
+				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain commit %s\n",
+					    displaypath, missing_src ?
+					    oid_to_hex(&p->oid_src) :
+					    oid_to_hex(&p->oid_dst));
+			}
+			errmsg = strbuf_detach(&errmsg_str, NULL);
+		}
 	}
 
 	print_submodule_summary(info, errmsg, total_commits,
