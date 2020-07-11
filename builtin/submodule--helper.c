@@ -1224,7 +1224,7 @@ static const char *get_diff_cmd(enum diff_cmd diff_cmd)
 	}
 }
 
-static int compute_summary_module_list(char *head,
+static int compute_summary_module_list(struct object_id *head_oid,
 				         struct summary_cb *info,
 				         enum diff_cmd diff_cmd)
 {
@@ -1237,8 +1237,8 @@ static int compute_summary_module_list(char *head,
 		argv_array_push(&diff_args, "--cached");
 	argv_array_pushl(&diff_args, "--ignore-submodules=dirty", "--raw",
 			 NULL);
-	if (head)
-		argv_array_push(&diff_args, head);
+	if (head_oid)
+		argv_array_push(&diff_args, oid_to_hex(head_oid));
 	argv_array_push(&diff_args, "--");
 	if (info->argc)
 		argv_array_pushv(&diff_args, info->argv);
@@ -1282,9 +1282,8 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	int files = 0;
 	int summary_limit = -1;
-	struct child_process cp_rev = CHILD_PROCESS_INIT;
-	struct strbuf sb = STRBUF_INIT;
 	enum diff_cmd diff_cmd = DIFF_INDEX;
+	struct object_id head_oid;
 	int ret;
 
 	struct option module_summary_options[] = {
@@ -1311,30 +1310,26 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	if (!summary_limit)
 		return 0;
 
-	cp_rev.git_cmd = 1;
-	argv_array_pushl(&cp_rev.args, "rev-parse", "-q", "--verify",
-			 argc ? argv[0] : "HEAD", NULL);
-
-	if (!capture_command(&cp_rev, &sb, 0)) {
-		strbuf_strip_suffix(&sb, "\n");
+	if (!get_oid(argc ? argv[0] : "HEAD", &head_oid)) {
 		if (argc) {
 			argv++;
 			argc--;
 		}
 	} else if (!argc || !strcmp(argv[0], "HEAD")) {
 		/* before the first commit: compare with an empty tree */
-		strbuf_addstr(&sb, oid_to_hex(the_hash_algo->empty_tree));
+		oidcpy(&head_oid, the_hash_algo->empty_tree);
 		if (argc) {
 			argv++;
 			argc--;
 		}
 	} else {
-		strbuf_addstr(&sb, "HEAD");
+		if (get_oid("HEAD", &head_oid))
+			die(_("Could not fetch a revision for HEAD"));
 	}
 
 	if (files) {
 		if (cached)
-			die(_("--cached and --files are mutually exclusive"));
+			die(_("The --cached option cannot be used with the --files option"));
 		diff_cmd = DIFF_FILES;
 	}
 
@@ -1347,9 +1342,8 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	info.files = files;
 	info.summary_limit = summary_limit;
 
-	ret = compute_summary_module_list((diff_cmd == DIFF_FILES) ? NULL : sb.buf,
+	ret = compute_summary_module_list((diff_cmd == DIFF_FILES) ? NULL : &head_oid,
 					   &info, diff_cmd);
-	strbuf_release(&sb);
 	return ret;
 }
 
