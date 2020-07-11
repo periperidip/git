@@ -1224,10 +1224,11 @@ static const char *get_diff_cmd(enum diff_cmd diff_cmd)
 	}
 }
 
-static int compute_summary_module_list(char *head,
+static int compute_summary_module_list(struct object_id *head_oid,
 				         struct summary_cb *info,
 				         enum diff_cmd diff_cmd)
 {
+	const char *oid_hash = (&head_oid->hash);
 	struct argv_array diff_args = ARGV_ARRAY_INIT;
 	struct rev_info rev;
 	struct module_cb_list list = MODULE_CB_LIST_INIT;
@@ -1237,8 +1238,8 @@ static int compute_summary_module_list(char *head,
 		argv_array_push(&diff_args, "--cached");
 	argv_array_pushl(&diff_args, "--ignore-submodules=dirty", "--raw",
 			 NULL);
-	if (head)
-		argv_array_push(&diff_args, head);
+	if (oid_hash)
+		argv_array_push(&diff_args, oid_hash);
 	argv_array_push(&diff_args, "--");
 	if (info->argc)
 		argv_array_pushv(&diff_args, info->argv);
@@ -1285,6 +1286,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	struct child_process cp_rev = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	enum diff_cmd diff_cmd = DIFF_INDEX;
+	struct object_id head_oid;
 	int ret;
 
 	struct option module_summary_options[] = {
@@ -1315,7 +1317,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	argv_array_pushl(&cp_rev.args, "rev-parse", "-q", "--verify",
 			 argc ? argv[0] : "HEAD", NULL);
 
-	if (!capture_command(&cp_rev, &sb, 0)) {
+	if (get_oid("HEAD", &head_oid)) {
 		strbuf_strip_suffix(&sb, "\n");
 		if (argc) {
 			argv++;
@@ -1347,7 +1349,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	info.files = files;
 	info.summary_limit = summary_limit;
 
-	ret = compute_summary_module_list((diff_cmd == DIFF_FILES) ? NULL : sb.buf,
+	ret = compute_summary_module_list((diff_cmd == DIFF_FILES) ? NULL : &head_oid,
 					   &info, diff_cmd);
 	strbuf_release(&sb);
 	return ret;
