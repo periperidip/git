@@ -1191,7 +1191,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 	int i;
 	for (i = 0; i < list->nr; i++) {
 		struct module_cb *p = list->entries[i];
-		struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
+		struct strbuf sm_gitdir = STRBUF_INIT;
 
 		if (p->status == 'D' || p->status == 'T') {
 			generate_submodule_summary(info, p);
@@ -1218,16 +1218,10 @@ static void prepare_submodule_summary(struct summary_cb *info,
 		}
 
 		/* Also show added or modified modules which are checked out */
-		cp_rev_parse.dir = p->sm_path;
-		cp_rev_parse.git_cmd = 1;
-		cp_rev_parse.no_stderr = 1;
-		cp_rev_parse.no_stdout = 1;
-
-		argv_array_pushl(&cp_rev_parse.args, "rev-parse",
-				 "--git-dir", NULL);
-
-		if (!run_command(&cp_rev_parse))
+		strbuf_addstr(&sm_gitdir, p->sm_path);
+		if (is_nonbare_repository_dir(&sm_gitdir))
 			generate_submodule_summary(info, p);
+		strbuf_release(&sm_gitdir);
 	}
 }
 
