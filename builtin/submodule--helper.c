@@ -1075,6 +1075,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 			}
 			strbuf_release(&sb_hash_object);
 		} else {
+			/* for a submodule removal (mode:0000000), don't warn */
 			if (p->mod_dst)
 				warning(_("unexpected mode %d\n"), p->mod_dst);
 		}
