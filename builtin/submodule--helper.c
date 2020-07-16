@@ -1073,9 +1073,9 @@ static void generate_submodule_summary(struct summary_cb *info,
 				get_oid_hex(sb_hash_object.buf, &p->oid_dst);
 			}
 			strbuf_release(&sb_hash_object);
-		} else {
-			if (p->mod_dst)
-				warning(_("unexpected mode %d\n"), p->mod_dst);
+		} else if (p->mod_dst) {
+			/* for mod_dst=0000000, ignore */
+			warning(_("unexpected mode %d\n"), p->mod_dst);
 		}
 	}
 
