@@ -1046,21 +1046,10 @@ static void generate_submodule_summary(struct summary_cb *info,
 
 	if (!info->cached && oideq(&p->oid_dst, &null_oid)) {
 		if (S_ISGITLINK(p->mod_dst)) {
-			struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
-			struct strbuf sb_rev_parse = STRBUF_INIT;
-
-			cp_rev_parse.git_cmd = 1;
-			cp_rev_parse.no_stderr = 1;
-			cp_rev_parse.dir = p->sm_path;
-			prepare_submodule_repo_env(&cp_rev_parse.env_array);
-
-			argv_array_pushl(&cp_rev_parse.args, "rev-parse",
-					 "HEAD", NULL);
-			if (!capture_command(&cp_rev_parse, &sb_rev_parse, 0)) {
-				strbuf_strip_suffix(&sb_rev_parse, "\n");
-				get_oid_hex(sb_rev_parse.buf, &p->oid_dst);
-			}
-			strbuf_release(&sb_rev_parse);
+			struct ref_store *refs = get_submodule_ref_store(p->sm_path);
+			struct object_id oid;
+			if (!refs_head_ref(refs, handle_submodule_head_ref, &oid))
+				p->oid_dst = oid;
 		} else if (S_ISLNK(p->mod_dst) || S_ISREG(p->mod_dst)) {
 			struct child_process cp_hash_object = CHILD_PROCESS_INIT;
 			struct strbuf sb_hash_object = STRBUF_INIT;
