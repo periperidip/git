@@ -1050,18 +1050,13 @@ static void generate_submodule_summary(struct summary_cb *info,
 			if (refs)
 				refs_head_ref(refs, handle_submodule_head_ref, &p->oid_dst);
 		} else if (S_ISLNK(p->mod_dst) || S_ISREG(p->mod_dst)) {
-			struct child_process cp_hash_object = CHILD_PROCESS_INIT;
-			struct strbuf sb_hash_object = STRBUF_INIT;
+			struct stat st;
+			int fd = open(p->sm_path, O_RDONLY);
 
-			cp_hash_object.git_cmd = 1;
-			argv_array_pushl(&cp_hash_object.args, "hash-object",
-					 p->sm_path, NULL);
-			if (!capture_command(&cp_hash_object,
-					     &sb_hash_object, 0)) {
-				strbuf_strip_suffix(&sb_hash_object, "\n");
-				get_oid_hex(sb_hash_object.buf, &p->oid_dst);
-			}
-			strbuf_release(&sb_hash_object);
+			if (fd < 0 || fstat(fd, &st) < 0 ||
+			    index_fd(&the_index, &p->oid_dst, fd, &st, OBJ_BLOB,
+				     p->sm_path, 0))
+				error(_("couldn't hash object from '%s'"), p->sm_path);
 		} else {
 			/* for a submodule removal (mode:0000000), don't warn */
 			if (p->mod_dst)
