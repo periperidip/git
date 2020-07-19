@@ -1006,7 +1006,7 @@ static void print_submodule_summary(struct summary_cb *info, char* errmsg,
 
 	if (errmsg) {
 		printf(_("%s"), errmsg);
-	} else {
+	} else if (total_commits > 0) {
 		struct child_process cp_log = CHILD_PROCESS_INIT;
 
 		cp_log.git_cmd = 1;
