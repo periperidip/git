@@ -987,6 +987,9 @@ static void print_submodule_summary(struct summary_cb *info, char* errmsg,
 				    int missing_src, int missing_dst,
 				    struct module_cb *p)
 {
+	struct strbuf sm_path = STRBUF_INIT;
+	strbuf_addstr(&sm_path, p->sm_path);
+
 	if (p->status == 'T') {
 		if (S_ISGITLINK(p->mod_dst))
 			printf(_("* %s %s(blob)->%s(submodule)"),
@@ -1006,7 +1009,7 @@ static void print_submodule_summary(struct summary_cb *info, char* errmsg,
 
 	if (errmsg) {
 		printf(_("%s"), errmsg);
-	} else {
+	} else if (is_nonbare_repository_dir(&sm_path)) {
 		struct child_process cp_log = CHILD_PROCESS_INIT;
 
 		cp_log.git_cmd = 1;
