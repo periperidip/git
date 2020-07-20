@@ -80,6 +80,21 @@ EOF
 	test_cmp expected actual
 "
 
+test_expect_success 'should not print anything in case of a deinitialised submodule' "
+	git submodule deinit sm1 &&
+	git submodule summary >output1 2>&1 &&
+	git submodule init sm1 &&
+	git submodule summary >output2 &&
+	cat >expected <<-EOF &&
+* sm1 0000000...$head1 (2):
+  > Add foo2
+
+EOF
+	test_cmp expected output2 &&
+	test_must_be_empty output1
+"
+
+git submodule init sm1
 commit_file sm1 &&
 head2=$(add_file sm1 foo3)
 
