@@ -12,3 +12,21 @@ is done using git add in t7401 by Ping Yin.
 
 TEST_NO_CREATE_REPO=1
 . ./test-lib.sh
+
+test_expect_success 'summary test environment setup' '
+	git init super &&
+	git init sm &&
+	(cd sm &&
+		echo file >file &&
+		git add file &&
+		test_tick &&
+		git commit -m "add file"
+	) &&
+	(cd super &&
+		git submodule add ../sm &&
+		test_tick &&
+		git commit -m "add submodule"
+	)
+'
+
+test_done
