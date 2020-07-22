@@ -5,8 +5,10 @@
 
 test_description='Summary support for submodules
 
-This test tries to verify the sanity of summary subcommand of git submodule.
+This test script tries to verify the sanity of summary subcommand of git submodule.
 '
+# WARNING: This test script uses 'git add' instead of 'git submodule add' to add
+# submodules to the superproject. The script may not work as expected in some cases.
 
 . ./test-lib.sh
 
@@ -35,6 +37,8 @@ add_file . foo >/dev/null
 
 head1=$(add_file sm1 foo1 foo2)
 
+# NEEDSWORK: This test script is old fashioned and may need a big cleanup to
+# ensure it works correctly with the modern day 'git submodule summary'
 test_expect_success 'added submodule' "
 	git add sm1 &&
 	git submodule summary >actual &&
