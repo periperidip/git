@@ -29,4 +29,10 @@ test_expect_success 'summary test environment setup' '
 	)
 '
 
+test_expect_success 'ensure .gitmodules is present' '
+	(cd super &&
+		test_path_is_file .gitmodules
+	)
+'
+
 test_done
