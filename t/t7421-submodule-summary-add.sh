@@ -11,3 +11,15 @@ while making sure to add submodules using `git submodule add` instead of
 '
 
 . ./test-lib.sh
+
+test_expect_success 'summary test environment setup' '
+	git init sm &&
+	test_commit -C sm "add file" file file file &&
+
+	git init &&
+	git submodule add ./sm submodule &&
+	test_tick &&
+	git commit -m "add submodule"
+'
+
+test_done
