@@ -7,6 +7,8 @@ test_description='Summary support for submodules
 
 This test tries to verify the sanity of summary subcommand of git submodule.
 '
+# WARNING: This test uses 'git add' instead of 'git submodule add' to add
+# submodules to the superproject.
 
 . ./test-lib.sh
 
