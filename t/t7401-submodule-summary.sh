@@ -5,8 +5,9 @@
 
 test_description='Summary support for submodules
 
-This test tries to verify the sanity of summary subcommand of git submodule.
+This test script tries to verify the sanity of summary subcommand of git submodule.
 '
+# NEEDSWORK: This test script is old fashioned and may need a big cleanup.
 
 . ./test-lib.sh
 
