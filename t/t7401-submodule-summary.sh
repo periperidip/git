@@ -5,8 +5,13 @@
 
 test_description='Summary support for submodules
 
-This test tries to verify the sanity of summary subcommand of git submodule.
+This test script tries to verify the sanity of summary subcommand of git submodule.
 '
+# WARNING: This test script uses 'git add' instead of 'git submodule add' to add
+# submodules to the superproject. Some submodule subcommands such as init and
+# deinit might not work as expected in this script.
+
+# NEEDSWORK: This test script is old fashioned and may need a big cleanup.
 
 . ./test-lib.sh
 
