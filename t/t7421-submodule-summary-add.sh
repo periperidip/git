@@ -37,4 +37,20 @@ test_expect_success 'submodule summary output for initialized submodule' '
 	test_cmp expect actual
 '
 
+test_expect_success 'submodule summary output for deinitialized submodule' '
+	git submodule deinit submodule &&
+	git submodule summary HEAD^ >actual &&
+	test_must_be_empty actual &&
+	git submodule update --init submodule &&
+	git submodule summary HEAD^ >actual &&
+	rev1=$(git -C sm rev-parse --short HEAD^) &&
+	rev2=$(git -C sm rev-parse --short HEAD) &&
+	cat >expect <<-EOF &&
+	* submodule ${rev1}...${rev2} (1):
+	  > add file2
+
+	EOF
+	test_cmp expect actual
+'
+
 test_done
