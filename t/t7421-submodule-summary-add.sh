@@ -35,4 +35,28 @@ test_expect_success 'ensure .gitmodules is present' '
 	)
 '
 
+test_expect_success 'verify summary output for initialised submodule' '
+	(cd sm &&
+		echo file2 >file2 &&
+		git add file2 &&
+		test_tick &&
+		git commit -m "add file2"
+	) &&
+	(cd super &&
+		git submodule update --remote &&
+		git add sm &&
+		test_tick &&
+		git commit -m "update submodule" &&
+		git submodule summary HEAD^ >../actual
+	) &&
+	rev1=$(git -C sm rev-parse --short HEAD^) &&
+	rev2=$(git -C sm rev-parse --short HEAD) &&
+	cat >expect <<-EOF &&
+	* sm ${rev1}...${rev2} (1):
+	  > add file2
+
+	EOF
+	test_cmp expect actual
+'
+
 test_done
