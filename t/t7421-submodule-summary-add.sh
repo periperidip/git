@@ -23,4 +23,21 @@ test_expect_success 'summary test environment setup' '
 	git -C super commit -m "add submodule"
 '
 
+test_expect_success 'verify summary output for initialised submodule' '
+	test_commit -C sm "add file2" file2 file2 file2 &&
+	git -C super submodule update --remote &&
+	git -C super add sm &&
+	test_tick -C super &&
+	git -C super commit -m "update submodule" &&
+	git -C super submodule summary HEAD^ >actual &&
+	rev1=$(git -C sm rev-parse --short HEAD^) &&
+	rev2=$(git -C sm rev-parse --short HEAD) &&
+	cat >expect <<-EOF &&
+	* sm ${rev1}...${rev2} (1):
+	  > add file2
+
+	EOF
+	test_cmp expect actual
+'
+
 test_done
