@@ -40,4 +40,10 @@ test_expect_success 'verify summary output for initialised submodule' '
 	test_cmp expect actual
 '
 
+test_expect_success 'verify summary output for deinitialised submodule' '
+	git -C super submodule deinit sm &&
+	git -C super submodule summary HEAD^ >actual &&
+	test_must_be_empty actual
+'
+
 test_done
