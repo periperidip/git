@@ -53,4 +53,11 @@ test_expect_success 'submodule summary output for deinitialized submodule' '
 	test_cmp expect actual
 '
 
+test_expect_success 'submodule summary output for submodules with changed paths' '
+	git mv submodule subm &&
+	git commit -m "change submodule path" &&
+	git submodule summary HEAD^^ -- submodule 2>err &&
+	grep "fatal: not a git repository: '\''submodule/.git'\''" err
+'
+
 test_done
