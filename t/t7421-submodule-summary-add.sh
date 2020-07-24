@@ -55,4 +55,20 @@ test_expect_success 'verify summary output for deinitialised submodule' '
 	test_cmp expect actual
 '
 
+test_expect_success 'verify summary output for non-existent submodules' '
+	rm -rf super/sm super/.gitmodules &&
+	touch super/.gitmodules &&
+	git -C super submodule add ../sm subm &&
+	git -C super add sm subm &&
+	git -C super commit -m "rename submodule" &&
+	rev=$(git -C sm rev-parse --short HEAD^) &&
+	git -C super submodule summary HEAD^^ -- sm >actual 2>&1 &&
+	cat >expect <<-EOF &&
+	fatal: exec '\''rev-parse'\'': cd to '\''sm'\'' failed: No such file or directory
+	* sm ${rev}...0000000:
+
+	EOF
+	test_cmp expect actual
+'
+
 test_done
