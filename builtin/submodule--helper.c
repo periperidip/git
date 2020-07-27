@@ -987,26 +987,27 @@ static void print_submodule_summary(struct summary_cb *info, char* errmsg,
 				    int missing_src, int missing_dst,
 				    struct module_cb *p)
 {
-	if (p->status == 'T') {
-		if (S_ISGITLINK(p->mod_dst))
-			printf(_("* %s %s(blob)->%s(submodule)"),
-				 displaypath, src_abbrev, dst_abbrev);
+	if (!info->quiet) {
+		if (p->status == 'T') {
+			if (S_ISGITLINK(p->mod_dst))
+				printf(_("* %s %s(blob)->%s(submodule)"),
+					displaypath, src_abbrev, dst_abbrev);
+			else
+				printf(_("* %s %s(submodule)->%s(blob)"),
+					displaypath, src_abbrev, dst_abbrev);
+		} else if(!info->quiet) {
+			printf("* %s %s...%s",
+				displaypath, src_abbrev, dst_abbrev);
+		}
+
+		if (total_commits < 0)
+			printf(":\n");
 		else
-			printf(_("* %s %s(submodule)->%s(blob)"),
-				 displaypath, src_abbrev, dst_abbrev);
-	} else {
-		printf("* %s %s...%s",
-			displaypath, src_abbrev, dst_abbrev);
+			printf(" (%d):\n", total_commits);
 	}
-
-	if (total_commits < 0)
-		printf(":\n");
-	else
-		printf(" (%d):\n", total_commits);
-
 	if (errmsg) {
 		printf(_("%s"), errmsg);
-	} else if (total_commits > 0) {
+	} else if (!info->quiet && total_commits > 0) {
 		struct child_process cp_log = CHILD_PROCESS_INIT;
 
 		cp_log.git_cmd = 1;
