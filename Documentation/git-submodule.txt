@@ -200,7 +200,12 @@ summary [--cached|--files] [--for-status] [(-n|--summary-limit) <n>] [commit] [-
 	(this option doesn't allow to use the `--cached` option or to provide an
 	explicit commit). If the option `--for-status` is given, skip submodules
 	with `ignore_config` value set to 'all', thereby, fetching the submodule
-	configurations from a revision where the .gitmodules existed.
+	configurations from a revision where the .gitmodules existed. If the
+	option `--summary` is given, limit the summary size (number of commits
+	shown in total). Giving 0 will disable the summary; a negative number
+	means unlimited	(the default). This limit only applies to modified
+	submodules. The	size is always limited to 1 for added/deleted/typechanged
+	submodules.
 +
 Using the `--submodule=log` option with linkgit:git-diff[1] will provide that
 information too.
