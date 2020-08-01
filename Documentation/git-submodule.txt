@@ -190,7 +190,7 @@ set-url [--] <path> <newurl>::
 	automatically synchronize the submodule's new remote URL
 	configuration.
 
-summary [--cached|--files] [(-n|--summary-limit) <n>] [commit] [--] [<path>...]::
+summary [--cached|--files] [--for-status] [(-n|--summary-limit) <n>] [commit] [--] [<path>...]::
 	Show commit summary between the given commit (defaults to HEAD) and
 	working tree/index. For a submodule in question, a series of commits
 	in the submodule between the given super project commit and the
@@ -308,6 +308,12 @@ OPTIONS
 	This option is only valid for the summary command. This command
 	compares the commit in the index with that in the submodule HEAD
 	when this option is used.
+
+--for-status::
+	This option is only valid for the summary command. This command
+	skips submodules with `ignore_config` i.e., submodule.<name>.ignore
+	value in `.gitmodules` or `.git/config` set to 'all' and thus,
+	inserts a header and comments out the output.
 
 -n::
 --summary-limit::
