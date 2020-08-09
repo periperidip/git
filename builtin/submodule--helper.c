@@ -2320,6 +2320,82 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 	return !!ret;
 }
 
+static int module_add(int argc, const char **argv, const char *prefix)
+{
+	int force = 0, quiet = 0, depth = 0, ret = 0;
+	const char *opt_branch = NULL, *ref_path = NULL;
+	const char *path;
+	char *repo, *realrepo;
+
+	struct option options[] = {
+		OPT_NOOP_NOARG('q', "quiet"),
+		OPT_INTEGER('d', "depth", &depth,
+			N_("create a shallow clone of that depth")),
+		OPT_STRING('b', "branch", &opt_branch, N_("branch"),
+			N_("set the default tracking branch")),
+		OPT_STRING('b', "branch", &opt_branch, N_("branch"),
+			N_("set the default tracking branch")),
+		OPT__FORCE(&force, N_("forcefully add the submodule"), PARSE_OPT_NOCOMPLETE),
+		OPT_END()
+	};
+	const char *const usage[] = {
+		N_("git submodule--helper set-branch [-q|--quiet] (-d|--default) <path>"),
+		N_("git submodule--helper set-branch [-q|--quiet] (-b|--branch) <branch> <path>"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (!is_writing_gitmodules_ok())
+		die(_("please make sure that the .gitmodules file is in the working tree"));
+
+	repo = argv[0];
+	if (!(path = argv[1])) {
+		if (!repo)
+			usage_with_options(usage, options);
+		else {
+			char *token;
+			token = strtok(repo, "/");
+			while (token) {
+				path = xstrdup(token);
+				token = strtok(NULL, "/");
+			}
+		}
+	}
+	if (!is_absolute_path(path)) {
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_addf(&sb, "%s/%s", get_git_work_tree(), path);
+		path = strbuf_detach(&sb, NULL);
+	}
+	else
+		path = xstrdup(path);
+
+	/* assure repo is absolute or relative to parent */
+	if (starts_with_dot_slash(repo) || starts_with_dot_dot_slash(repo)){
+		struct strbuf sb = STRBUF_INIT;
+		const char *url = repo;
+		char *remote = get_default_remote(), *remoteurl = NULL;
+		if (get_git_work_tree())
+			die(_("Relative path can only be used from the toplevel of the working tree"));
+
+		/* dereference source url relative to parent's url */
+		strbuf_addf(&sb, "remote.%s.url", remote);
+		free(remote);
+
+		if (git_config_get_string(sb.buf, &remoteurl))
+			remoteurl = xgetcwd();
+		if (!(realrepo = relative_url(remoteurl, url, NULL)))
+			return -1;
+	}
+	else if (is_absolute_path(repo))
+		realrepo = repo;
+	else
+		die(_("repo URL: '%s' must be absolute or begin with ./|../"), repo);
+
+
+	return !!ret;
+}
+
 #define SUPPORT_SUPER_PREFIX (1<<0)
 
 struct cmd_struct {
