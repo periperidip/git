@@ -968,10 +968,10 @@ static char* verify_submodule_committish(const char *sm_path,
 	cp_rev_parse.git_cmd = 1;
 	cp_rev_parse.dir = sm_path;
 	prepare_submodule_repo_env(&cp_rev_parse.env_array);
-	argv_array_pushl(&cp_rev_parse.args, "rev-parse", "-q",
+	strvec_pushl(&cp_rev_parse.args, "rev-parse", "-q",
 			 "--short", NULL);
-	argv_array_pushf(&cp_rev_parse.args, "%s^0", committish);
-	argv_array_push(&cp_rev_parse.args, "--");
+	strvec_pushf(&cp_rev_parse.args, "%s^0", committish);
+	strvec_push(&cp_rev_parse.args, "--");
 
 	if (capture_command(&cp_rev_parse, &result, 0))
 		return NULL;
@@ -1011,23 +1011,23 @@ static void print_submodule_summary(struct summary_cb *info, char* errmsg,
 		cp_log.git_cmd = 1;
 		cp_log.dir = p->sm_path;
 		prepare_submodule_repo_env(&cp_log.env_array);
-		argv_array_pushl(&cp_log.args, "log", NULL);
+		strvec_pushl(&cp_log.args, "log", NULL);
 
 		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst)) {
 			if (info->summary_limit > 0)
-				argv_array_pushf(&cp_log.args, "-%d",
+				strvec_pushf(&cp_log.args, "-%d",
 						 info->summary_limit);
 
-			argv_array_pushl(&cp_log.args, "--pretty=  %m %s",
+			strvec_pushl(&cp_log.args, "--pretty=  %m %s",
 					 "--first-parent", NULL);
-			argv_array_pushf(&cp_log.args, "%s...%s",
+			strvec_pushf(&cp_log.args, "%s...%s",
 					 src_abbrev,
 					 dst_abbrev);
 		} else if (S_ISGITLINK(p->mod_dst)) {
-			argv_array_pushl(&cp_log.args, "--pretty=  > %s",
+			strvec_pushl(&cp_log.args, "--pretty=  > %s",
 					 "-1", dst_abbrev, NULL);
 		} else {
-			argv_array_pushl(&cp_log.args, "--pretty=  < %s",
+			strvec_pushl(&cp_log.args, "--pretty=  < %s",
 					 "-1", src_abbrev, NULL);
 		}
 		run_command(&cp_log);
@@ -1115,18 +1115,18 @@ static void generate_submodule_summary(struct summary_cb *info,
 		struct child_process cp_rev_list = CHILD_PROCESS_INIT;
 		struct strbuf sb_rev_list = STRBUF_INIT;
 
-		argv_array_pushl(&cp_rev_list.args, "rev-list",
+		strvec_pushl(&cp_rev_list.args, "rev-list",
 				 "--first-parent", "--count", NULL);
 		if (S_ISGITLINK(p->mod_src) && S_ISGITLINK(p->mod_dst))
-			argv_array_pushf(&cp_rev_list.args, "%s...%s",
+			strvec_pushf(&cp_rev_list.args, "%s...%s",
 					 src_abbrev,
 					 dst_abbrev);
 		else
-			argv_array_push(&cp_rev_list.args,
+			strvec_push(&cp_rev_list.args,
 					S_ISGITLINK(p->mod_src) ?
 					src_abbrev :
 					dst_abbrev);
-		argv_array_push(&cp_rev_list.args, "--");
+		strvec_push(&cp_rev_list.args, "--");
 
 		cp_rev_list.git_cmd = 1;
 		cp_rev_list.dir = p->sm_path;
@@ -1246,27 +1246,27 @@ static int compute_summary_module_list(struct object_id *head_oid,
 				       struct summary_cb *info,
 				       enum diff_cmd diff_cmd)
 {
-	struct argv_array diff_args = ARGV_ARRAY_INIT;
+	struct strvec diff_args = STRVEC_INIT;
 	struct rev_info rev;
 	struct module_cb_list list = MODULE_CB_LIST_INIT;
 
-	argv_array_push(&diff_args, get_diff_cmd(diff_cmd));
+	strvec_push(&diff_args, get_diff_cmd(diff_cmd));
 	if (info->cached)
-		argv_array_push(&diff_args, "--cached");
-	argv_array_pushl(&diff_args, "--ignore-submodules=dirty", "--raw",
+		strvec_push(&diff_args, "--cached");
+	strvec_pushl(&diff_args, "--ignore-submodules=dirty", "--raw",
 			 NULL);
 	if (head_oid)
-		argv_array_push(&diff_args, oid_to_hex(head_oid));
-	argv_array_push(&diff_args, "--");
+		strvec_push(&diff_args, oid_to_hex(head_oid));
+	strvec_push(&diff_args, "--");
 	if (info->argc)
-		argv_array_pushv(&diff_args, info->argv);
+		strvec_pushv(&diff_args, info->argv);
 
 	git_config(git_diff_basic_config, NULL);
 	init_revisions(&rev, info->prefix);
 	rev.abbrev = 0;
-	precompose_argv(diff_args.argc, diff_args.argv);
+	precompose_argv(diff_args.nr, diff_args.v);
 
-	diff_args.argc = setup_revisions(diff_args.argc, diff_args.argv,
+	diff_args.nr = setup_revisions(diff_args.nr, diff_args.v,
 					 &rev, NULL);
 	rev.diffopt.output_format = DIFF_FORMAT_NO_OUTPUT | DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = submodule_summary_callback;
