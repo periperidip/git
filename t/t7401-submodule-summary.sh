@@ -39,10 +39,10 @@ test_expect_success 'added submodule' "
 	git add sm1 &&
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 0000000...$head1 (2):
-  > Add foo2
+	* sm1 0000000...$head1 (2):
+	  > Add foo2
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
@@ -53,10 +53,10 @@ test_expect_success 'added submodule (subdirectory)' "
 		git submodule summary >../actual
 	) &&
 	cat >expected <<-EOF &&
-* ../sm1 0000000...$head1 (2):
-  > Add foo2
+	* ../sm1 0000000...$head1 (2):
+	  > Add foo2
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
@@ -74,8 +74,8 @@ test_expect_success 'added submodule (subdirectory with explicit path)' "
 		git submodule summary ../sm1 >../actual
 	) &&
 	cat >expected <<-EOF &&
-* ../sm1 0000000...$head1 (2):
-  > Add foo2
+	* ../sm1 0000000...$head1 (2):
+	  > Add foo2
 
 EOF
 	test_cmp expected actual
@@ -87,8 +87,8 @@ head2=$(add_file sm1 foo3)
 test_expect_success 'modified submodule(forward)' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head1...$head2 (1):
-  > Add foo3
+	* sm1 $head1...$head2 (1):
+	  > Add foo3
 
 EOF
 	test_cmp expected actual
@@ -97,8 +97,8 @@ EOF
 test_expect_success 'modified submodule(forward), --files' "
 	git submodule summary --files >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head1...$head2 (1):
-  > Add foo3
+	* sm1 $head1...$head2 (1):
+	  > Add foo3
 
 EOF
 	test_cmp expected actual
@@ -111,10 +111,10 @@ test_expect_success 'no ignore=all setting has any effect' "
 	git config diff.ignoreSubmodules all &&
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head1...$head2 (1):
-  > Add foo3
+	* sm1 $head1...$head2 (1):
+	  > Add foo3
 
-EOF
+	EOF
 	test_cmp expected actual &&
 	git config --unset diff.ignoreSubmodules &&
 	git config --remove-section submodule.sm1 &&
@@ -133,11 +133,11 @@ head3=$(
 test_expect_success 'modified submodule(backward)' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head2...$head3 (2):
-  < Add foo3
-  < Add foo2
+	* sm1 $head2...$head3 (2):
+	  < Add foo3
+	  < Add foo2
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
@@ -146,25 +146,25 @@ head4_full=$(GIT_DIR=sm1/.git git rev-parse --verify HEAD)
 test_expect_success 'modified submodule(backward and forward)' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head2...$head4 (4):
-  > Add foo5
-  > Add foo4
-  < Add foo3
-  < Add foo2
+	* sm1 $head2...$head4 (4):
+	  > Add foo5
+	  > Add foo4
+	  < Add foo3
+	  < Add foo2
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
 test_expect_success '--summary-limit' "
 	git submodule summary -n 3 >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head2...$head4 (4):
-  > Add foo5
-  > Add foo4
-  < Add foo3
+	* sm1 $head2...$head4 (4):
+	  > Add foo5
+	  > Add foo4
+	  < Add foo3
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
@@ -179,20 +179,20 @@ mv sm1-bak sm1
 test_expect_success 'typechanged submodule(submodule->blob), --cached' "
 	git submodule summary --cached >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head4(submodule)->$head5(blob) (3):
-  < Add foo5
+	* sm1 $head4(submodule)->$head5(blob) (3):
+	  < Add foo5
 
-EOF
+	EOF
 	test_i18ncmp actual expected
 "
 
 test_expect_success 'typechanged submodule(submodule->blob), --files' "
 	git submodule summary --files >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head5(blob)->$head4(submodule) (3):
-  > Add foo5
+	* sm1 $head5(blob)->$head4(submodule) (3):
+	  > Add foo5
 
-EOF
+	EOF
 	test_i18ncmp actual expected
 "
 
@@ -201,9 +201,9 @@ git checkout-index sm1
 test_expect_success 'typechanged submodule(submodule->blob)' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head4(submodule)->$head5(blob):
+	* sm1 $head4(submodule)->$head5(blob):
 
-EOF
+	EOF
 	test_i18ncmp actual expected
 "
 
@@ -213,10 +213,10 @@ head6=$(add_file sm1 foo6 foo7)
 test_expect_success 'nonexistent commit' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head4...$head6:
-  Warn: sm1 doesn't contain commit $head4_full
+	* sm1 $head4...$head6:
+	  Warn: sm1 doesn't contain commit $head4_full
 
-EOF
+	EOF
 	test_i18ncmp actual expected
 "
 
@@ -224,10 +224,10 @@ commit_file
 test_expect_success 'typechanged submodule(blob->submodule)' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head5(blob)->$head6(submodule) (2):
-  > Add foo7
+	* sm1 $head5(blob)->$head6(submodule) (2):
+	  > Add foo7
 
-EOF
+	EOF
 	test_i18ncmp expected actual
 "
 
@@ -236,9 +236,9 @@ rm -rf sm1
 test_expect_success 'deleted submodule' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head6...0000000:
+	* sm1 $head6...0000000:
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
@@ -251,22 +251,22 @@ test_expect_success 'create second submodule' '
 test_expect_success 'multiple submodules' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head6...0000000:
+	* sm1 $head6...0000000:
 
-* sm2 0000000...$head7 (2):
-  > Add foo9
+	* sm2 0000000...$head7 (2):
+	  > Add foo9
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
 test_expect_success 'path filter' "
 	git submodule summary sm2 >actual &&
 	cat >expected <<-EOF &&
-* sm2 0000000...$head7 (2):
-  > Add foo9
+	* sm2 0000000...$head7 (2):
+	  > Add foo9
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
@@ -274,24 +274,24 @@ commit_file sm2
 test_expect_success 'given commit' "
 	git submodule summary HEAD^ >actual &&
 	cat >expected <<-EOF &&
-* sm1 $head6...0000000:
+	* sm1 $head6...0000000:
 
-* sm2 0000000...$head7 (2):
-  > Add foo9
+	* sm2 0000000...$head7 (2):
+	  > Add foo9
 
-EOF
+	EOF
 	test_cmp expected actual
 "
 
 test_expect_success '--for-status' "
 	git submodule summary --for-status HEAD^ >actual &&
 	test_i18ncmp actual - <<EOF
-* sm1 $head6...0000000:
+	* sm1 $head6...0000000:
 
-* sm2 0000000...$head7 (2):
-  > Add foo9
+	* sm2 0000000...$head7 (2):
+	  > Add foo9
 
-EOF
+	EOF
 "
 
 test_expect_success 'fail when using --files together with --cached' "
