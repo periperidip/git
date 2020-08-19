@@ -2369,31 +2369,6 @@ static char *guess_dir_name(const char *repo)
 	return xstrndup(start, end - start);
 }
 
-static int check_already_existing_submodule(unsigned int force, const char *sm_path)
-{
-	struct child_process cp = CHILD_PROCESS_INIT;
-
-	cp.git_cmd = 1;
-	cp.no_stdout = 1;
-	cp.no_stderr = 1;
-	strvec_push(&cp.args, "ls-files");
-	if (!force) {
-		strvec_pushl(&cp.args, "--error-unmatch", sm_path, NULL);
-		if (!run_command(&cp))
-			die(_("'%s' already exists in the index"), sm_path);
-	} else {
-		struct strbuf sb = STRBUF_INIT;
-		strvec_pushl(&cp.args, "-s", "--", sm_path, NULL);
-		/* NEEDSWORK: convert ls-files call to index_name_pos */
-		if (!capture_command(&cp, &sb, 0) &&
-		    starts_with(sb.buf, "160000"))
-			die(_("'%s' already exists in the index and is not a "
-			      "submodule"), sm_path);
-		strbuf_release(&sb);
-	}
-	return 0;
-}
-
 static void fprintf_submodule_remote(const char *str)
 {
 	const char *p = str;
@@ -2659,8 +2634,16 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	if (is_dir_sep(path[strlen(path) -1]))
 		path[strlen(path) - 1] = '\0';
 
-	if (check_already_existing_submodule(force, path))
-		return 1;
+	if (!force) {
+		if (is_directory(path) && submodule_from_path(the_repository, &null_oid, path))
+			die(_("'%s' already exists in the index"), path);
+	} else {
+		int err;
+		if (index_name_pos(&the_index, path, strlen(path)) >= 0 &&
+		    !is_submodule_populated_gently(path, &err))
+			die(_("'%s' already exists in the index and is not a "
+			      "submodule"), path);
+	}
 
 	strbuf_addstr(&sb, path);
 	if (is_directory(path)) {
