@@ -2381,15 +2381,20 @@ static int check_already_existing_submodule(unsigned int force, const char *sm_p
 		strvec_pushl(&cp.args, "--error-unmatch", sm_path, NULL);
 		if (!run_command(&cp))
 			die(_("'%s' already exists in the index"), sm_path);
+		// if(is_submodule_active(the_repository, sm_path))
+		// 	die(_("'%s' already exists in the index"), sm_path);
 	} else {
-		struct strbuf sb = STRBUF_INIT;
-		strvec_pushl(&cp.args, "-s", "--", sm_path, NULL);
-		/* NEEDSWORK: convert ls-files call to index_name_pos */
-		if (!capture_command(&cp, &sb, 0) &&
-		    starts_with(sb.buf, "160000"))
-			die(_("'%s' already exists in the index and is not a "
-			      "submodule"), sm_path);
-		strbuf_release(&sb);
+		// struct strbuf sb = STRBUF_INIT;
+		// strvec_pushl(&cp.args, "-s", "--", sm_path, NULL);
+		// /* NEEDSWORK: convert ls-files call to index_name_pos */
+		// if (!capture_command(&cp, &sb, 0) &&
+		//     starts_with(sb.buf, "160000"))
+		// 	die(_("'%s' already exists in the index and is not a "
+		// 	      "submodule"), sm_path);
+		// strbuf_release(&sb);
+
+	if (index_name_pos(&the_index, sm_path, strlen(sm_path)) >= 0)
+		return -1;
 	}
 	return 0;
 }
@@ -2657,7 +2662,7 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	if (is_dir_sep(path[strlen(path) -1]))
 		path[strlen(path) - 1] = '\0';
 
-	if (check_already_existing_submodule(force, path))
+	if (check_already_existing_submodule(force, path) < 0)
 		return 1;
 
 	strbuf_addstr(&sb, path);
