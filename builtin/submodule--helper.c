@@ -959,7 +959,7 @@ enum diff_cmd {
 	DIFF_FILES
 };
 
-static char* verify_submodule_committish(const char *sm_path,
+static char *verify_submodule_committish(const char *sm_path,
 					 const char *committish)
 {
 	struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
@@ -979,7 +979,7 @@ static char* verify_submodule_committish(const char *sm_path,
 	return strbuf_detach(&result, NULL);
 }
 
-static void print_submodule_summary(struct summary_cb *info, char* errmsg,
+static void print_submodule_summary(struct summary_cb *info, char *errmsg,
 				    int total_commits, const char *displaypath,
 				    const char *src_abbrev, const char *dst_abbrev,
 				    struct module_cb *p)
