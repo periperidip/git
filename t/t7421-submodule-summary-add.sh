@@ -58,7 +58,6 @@ test_expect_success 'submodule summary output for submodules with changed paths'
 	git commit -m "change submodule path" &&
 	rev=$(git -C sm rev-parse --short HEAD^) &&
 	git submodule summary HEAD^^ -- my-subm >actual 2>err &&
-	grep "fatal:.*my-subm" err &&
 	cat >expected <<-EOF &&
 	* my-subm ${rev}...0000000:
 

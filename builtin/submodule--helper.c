@@ -972,7 +972,7 @@ static char *verify_submodule_committish(const char *sm_path,
 	strvec_pushf(&cp_rev_parse.args, "%s^0", committish);
 	strvec_push(&cp_rev_parse.args, "--");
 
-	if (capture_command(&cp_rev_parse, &result, 0))
+	if (!is_directory(sm_path) || capture_command(&cp_rev_parse, &result, 0))
 		return NULL;
 
 	strbuf_trim_trailing_newline(&result);
