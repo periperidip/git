@@ -1688,8 +1688,8 @@ static enum exist_status directory_exists_in_index_icase(struct index_state *ist
  * the files it contains) will sort with the '/' at the
  * end.
  */
-static enum exist_status directory_exists_in_index(struct index_state *istate,
-						   const char *dirname, int len)
+enum exist_status directory_exists_in_index(struct index_state *istate,
+					    const char *dirname, int len)
 {
 	int pos;
 

@@ -392,6 +392,9 @@ struct dir_entry *dir_add_ignored(struct dir_struct *dir,
 				  struct index_state *istate,
 				  const char *pathname, int len);
 
+enum exist_status directory_exists_in_index(struct index_state *istate,
+					    const char *dirname, int len);
+
 /*
  * these implement the matching logic for dir.c:excluded_from_list and
  * attr.c:path_matches()
