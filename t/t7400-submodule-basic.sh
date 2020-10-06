@@ -193,6 +193,17 @@ test_expect_success 'submodule add to .gitignored path with --force' '
 	)
 '
 
+test_expect_success 'submodule add to path with tracked contents fails' '
+	(
+		cd addtest-ignore &&
+		mkdir track &&
+		git add -f track &&
+		git commit -m "add tracked path" &&
+		! git submodule add "$submodurl" submod >output 2>&1 &&
+		test_file_not_empty output
+	)
+'
+
 test_expect_success 'submodule add to reconfigure existing submodule with --force' '
 	(
 		cd addtest-ignore &&
