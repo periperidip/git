@@ -2757,7 +2757,7 @@ struct add_data {
 	unsigned int progress: 1;
 	unsigned int dissociate: 1;
 };
-#define ADD_DATA_INIT { NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0 }
+#define ADD_DATA_INIT { 0 }
 
 /*
  * Guess dir name from repository: strip leading '.*[/:]',
@@ -2818,15 +2818,16 @@ static void fprintf_submodule_remote(const char *str)
 	free(url);
 }
 
-static int check_sm_exists(unsigned int force, const char *path) {
+static int can_create_submodule(unsigned int force, const char *path) {
 
 	int cache_pos, dir_in_cache = 0;
+
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
 
 	cache_pos = cache_name_pos(path, strlen(path));
-	if(cache_pos < 0 && (directory_exists_in_index(&the_index,
-	   path, strlen(path)) == index_directory))
+	if(cache_pos < 0 &&
+	   directory_exists_in_index(&the_index, path, strlen(path)) == index_directory)
 		dir_in_cache = 1;
 
 	if (!force) {
@@ -2851,7 +2852,7 @@ static void modify_remote_v(struct strbuf *sb)
 		const char *end = start;
 		while (sb->buf[i++] != '\n')
 			end++;
-		if (!strcmp("fetch", xstrndup(end - 6, 5)))
+		if (!strcmp("(fetch)", xstrndup(end - 6, 5)))
 			fprintf_submodule_remote(xstrndup(start, end - start - 7));
 	}
 }
@@ -3001,7 +3002,7 @@ static int module_add(int argc, const char **argv, const char *prefix)
 {
 	const char *branch = NULL, *custom_name = NULL, *realrepo = NULL;
 	const char *reference_path = NULL, *repo = NULL, *name = NULL;
-	char *path;
+	char *sm_path;
 	int force = 0, quiet = 0, depth = -1, progress = 0, dissociate = 0;
 	struct add_data info = ADD_DATA_INIT;
 	struct strbuf sb = STRBUF_INIT;
@@ -3033,21 +3034,22 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	if (!is_writing_gitmodules_ok())
 		die(_("please make sure that the .gitmodules file is in the working tree"));
 
-	if (reference_path && !is_absolute_path(reference_path) && prefix)
+	if (prefix && *prefix && reference_path &&
+	    !is_absolute_path(reference_path))
 		reference_path = xstrfmt("%s%s", prefix, reference_path);
 
 	if (argc == 0 || argc > 2) {
 		usage_with_options(usage, options);
 	} else if (argc == 1) {
 		repo = argv[0];
-		path = guess_dir_name(repo);
+		sm_path = guess_dir_name(repo);
 	} else {
 		repo = argv[0];
-		path = xstrdup(argv[1]);
+		sm_path = xstrdup(argv[1]);
 	}
 
-	if (!is_absolute_path(path) && prefix)
-		path = xstrfmt("%s%s", prefix, path);
+	if (!is_absolute_path(sm_path) && prefix)
+		sm_path = xstrfmt("%s%s", prefix, sm_path);
 
 	/* assure repo is absolute or relative to parent */
 	if (starts_with_dot_dot_slash(repo) || starts_with_dot_slash(repo)) {
@@ -3077,19 +3079,19 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	 * normalize path:
 	 * multiple //; leading ./; /./; /../;
 	 */
-	normalize_path_copy(path, path);
+	normalize_path_copy(sm_path, sm_path);
 	/* strip trailing '/' */
-	if (is_dir_sep(path[strlen(path) -1]))
-		path[strlen(path) - 1] = '\0';
+	if (is_dir_sep(sm_path[strlen(sm_path) -1]))
+		sm_path[strlen(sm_path) - 1] = '\0';
 
-	if (check_sm_exists(force, path))
+	if (can_create_submodule(force, sm_path))
 		return 1;
 
-	strbuf_addstr(&sb, path);
+	strbuf_addstr(&sb, sm_path);
 	if (is_nonbare_repository_dir(&sb)) {
 		struct object_id oid;
-		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
-			die(_("'%s' does not have a commit checked out"), path);
+		if (resolve_gitlink_ref(sm_path, "HEAD", &oid) < 0)
+			die(_("'%s' does not have a commit checked out"), sm_path);
 	}
 
 	if (!force) {
@@ -3098,21 +3100,22 @@ static int module_add(int argc, const char **argv, const char *prefix)
 		cp.git_cmd = 1;
 		cp.no_stdout = 1;
 		strvec_pushl(&cp.args, "add", "--dry-run", "--ignore-missing",
-			     "--no-warn-embedded-repo", path, NULL);
+			     "--no-warn-embedded-repo", sm_path, NULL);
 		if (pipe_command(&cp, NULL, 0, NULL, 0, &sb, 0)) {
-			fprintf(stderr, _("%s"), sb.buf);
+			strbuf_complete_line(&sb);
+			fputs(sb.buf, stderr);
 			return 1;
 		}
 		strbuf_release(&sb);
 	}
 
-	name = custom_name ? custom_name : path;
+	name = custom_name ? custom_name : sm_path;
 	if (check_submodule_name(name))
 		die(_("'%s' is not a valid submodule name"), name);
 
 	info.prefix = prefix;
 	info.sm_name = name;
-	info.sm_path = path;
+	info.sm_path = sm_path;
 	info.repo = repo;
 	info.realrepo = realrepo;
 	info.reference_path = reference_path;
@@ -3126,8 +3129,7 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	if (add_submodule(&info))
 		return 1;
 	config_added_submodule(&info);
-
-	free(path);
+	free(sm_path);
 
 	return 0;
 }
