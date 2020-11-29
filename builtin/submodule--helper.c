@@ -2818,8 +2818,8 @@ static void fprintf_submodule_remote(const char *str)
 	free(url);
 }
 
-static int can_create_submodule(unsigned int force, const char *path) {
-
+static int can_create_submodule(unsigned int force, const char *path)
+{
 	int cache_pos, dir_in_cache = 0;
 
 	if (read_cache() < 0)
@@ -2857,6 +2857,23 @@ static void modify_remote_v(struct strbuf *sb)
 	}
 }
 
+static void report_fetch_remotes(FILE *output, const char *sm_name, const char *git_dir)
+{
+	struct child_process cp_rem = CHILD_PROCESS_INIT;
+	struct strbuf sb_rem = STRBUF_INIT;
+
+	cp_rem.git_cmd = 1;
+	fprintf(stderr, _("A git directory for '%s' is "
+		"found locally with remote(s):\n"), sm_name);
+	strvec_pushf(&cp_rem.env_array,
+		     "GIT_DIR=%s", git_dir);
+	strvec_push(&cp_rem.env_array, "GIT_WORK_TREE=.");
+	strvec_pushl(&cp_rem.args, "remote", "-v", NULL);
+	if (!capture_command(&cp_rem, &sb_rem, 0)) {
+		modify_remote_v(&sb_rem);
+	}
+}
+
 static int add_submodule(struct add_data *info)
 {
 	/* perhaps the path exists and is already a git repo, else clone it */
@@ -2876,19 +2893,7 @@ static int add_submodule(struct add_data *info)
 
 		if (is_directory(submodule_git_dir)) {
 			if (!info->force) {
-				struct child_process cp_rem = CHILD_PROCESS_INIT;
-				struct strbuf sb_rem = STRBUF_INIT;
-				cp_rem.git_cmd = 1;
-				fprintf(stderr, _("A git directory for '%s' is "
-					"found locally with remote(s):\n"),
-					info->sm_name);
-				strvec_pushf(&cp_rem.env_array,
-					     "GIT_DIR=%s", submodule_git_dir);
-				strvec_push(&cp_rem.env_array, "GIT_WORK_TREE=.");
-				strvec_pushl(&cp_rem.args, "remote", "-v", NULL);
-				if (!capture_command(&cp_rem, &sb_rem, 0)) {
-					modify_remote_v(&sb_rem);
-				}
+				report_fetch_remotes(stderr, info->sm_name, submodule_git_dir);
 				error(_("If you want to reuse this local git "
 				      "directory instead of cloning again from\n "
 				      "  %s\n"
