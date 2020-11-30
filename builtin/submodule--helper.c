@@ -2792,32 +2792,6 @@ static char *guess_dir_name(const char *repo)
 	return xstrndup(start, end - start);
 }
 
-static void fprintf_submodule_remote(const char *str)
-{
-	const char *p = str;
-	const char *start;
-	const char *end;
-	char *name, *url;
-
-	start = p;
-	while (*p != ' ')
-		p++;
-	end = p;
-	name = xstrndup(start, end - start);
-
-	while(*p == ' ')
-		p++;
-	start = p;
-	while (*p != ' ')
-		p++;
-	end = p;
-	url = xstrndup(start, end - start);
-
-	fprintf(stderr, "  %s\t%s\n", name, url);
-	free(name);
-	free(url);
-}
-
 static int can_create_submodule(unsigned int force, const char *path)
 {
 	int cache_pos, dir_in_cache = 0;
@@ -2844,17 +2818,21 @@ static int can_create_submodule(unsigned int force, const char *path)
 	return 0;
 }
 
-static void modify_remote_v(struct strbuf *sb)
+static const char *parse_token(const char *cp, int *len)
 {
-	int i;
-	for (i = 0; i < sb->len; i++) {
-		const char *start = sb->buf + i;
-		const char *end = start;
-		while (sb->buf[i++] != '\n')
-			end++;
-		if (!strcmp("(fetch)", xstrndup(end - 6, 5)))
-			fprintf_submodule_remote(xstrndup(start, end - start - 7));
-	}
+	const char *p = cp, *start, *end;
+	char *str;
+
+	start = p;
+	while (*p != ' ')
+		p++;
+	end = p;
+	str = xstrndup(start, end - start);
+
+	while(*p == ' ')
+		p++;
+
+	return str;
 }
 
 static void report_fetch_remotes(FILE *output, const char *sm_name, const char *git_dir)
@@ -2870,7 +2848,21 @@ static void report_fetch_remotes(FILE *output, const char *sm_name, const char *
 	strvec_push(&cp_rem.env_array, "GIT_WORK_TREE=.");
 	strvec_pushl(&cp_rem.args, "remote", "-v", NULL);
 	if (!capture_command(&cp_rem, &sb_rem, 0)) {
-		modify_remote_v(&sb_rem);
+		int i;
+
+		for (i = 0; i < sb_rem.len; i++) {
+			char *start = sb_rem.buf + i, *end = start;
+			const char *name = start, *url, *tail;
+			int namelen, urllen;
+
+			while (sb_rem.buf[i++] != '\n')
+				end++;
+			url = parse_token(name, &namelen);
+			tail = parse_token(url, &urllen);
+			if (!memcmp(tail, "(fetch)", 7))
+				fprintf(stderr, "  %s\t%s\n", name, url);
+			start = *end ? end + 1 : end;
+		}
 	}
 }
 
@@ -2893,7 +2885,8 @@ static int add_submodule(struct add_data *info)
 
 		if (is_directory(submodule_git_dir)) {
 			if (!info->force) {
-				report_fetch_remotes(stderr, info->sm_name, submodule_git_dir);
+				report_fetch_remotes(stderr, info->sm_name,
+						     submodule_git_dir);
 				error(_("If you want to reuse this local git "
 				      "directory instead of cloning again from\n "
 				      "  %s\n"
