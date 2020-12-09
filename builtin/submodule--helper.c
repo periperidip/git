@@ -3101,16 +3101,17 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	}
 
 	if (!force) {
+		int exit_code = -1;
 		struct strbuf sb = STRBUF_INIT;
 		struct child_process cp = CHILD_PROCESS_INIT;
 		cp.git_cmd = 1;
 		cp.no_stdout = 1;
 		strvec_pushl(&cp.args, "add", "--dry-run", "--ignore-missing",
 			     "--no-warn-embedded-repo", sm_path, NULL);
-		if (pipe_command(&cp, NULL, 0, NULL, 0, &sb, 0)) {
+		if ((exit_code = pipe_command(&cp, NULL, 0, NULL, 0, &sb, 0))) {
 			strbuf_complete_line(&sb);
 			fputs(sb.buf, stderr);
-			return 1;
+			return exit_code;
 		}
 		strbuf_release(&sb);
 	}
