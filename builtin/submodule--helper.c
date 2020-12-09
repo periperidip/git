@@ -2949,6 +2949,7 @@ static void config_added_submodule(struct add_data *info)
 {
 	char *key, *var = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
+	struct child_process cp2 = CHILD_PROCESS_INIT;
 
 	key = xstrfmt("submodule.%s.url", info->sm_name);
 	git_config_set_gently(key, info->realrepo);
@@ -2958,21 +2959,28 @@ static void config_added_submodule(struct add_data *info)
 	strvec_pushl(&cp.args, "add", "--no-warn-embedded-repo", NULL);
 	if (info->force)
 		strvec_push(&cp.args, "--force");
-	strvec_pushl(&cp.args, "--", info->sm_path, ".gitmodules", NULL);
-
-	key = xstrfmt("submodule.%s.path", info->sm_name);
-	git_config_set_in_file_gently(".gitmodules", key, info->sm_path);
-	free(key);
-	key = xstrfmt("submodule.%s.url", info->sm_name);
-	git_config_set_in_file_gently(".gitmodules", key, info->repo);
-	free(key);
-	key = xstrfmt("submodule.%s.branch", info->sm_name);
-	if (info->branch)
-		git_config_set_in_file_gently(".gitmodules", key, info->branch);
-	free(key);
+	strvec_pushl(&cp.args, "--", info->sm_path, NULL);
 
 	if (run_command(&cp))
 		die(_("failed to add submodule '%s'"), info->sm_path);
+
+	key = xstrfmt("submodule.%s.path", info->sm_name);
+	config_set_in_gitmodules_file_gently(key, info->sm_path);
+	free(key);
+	key = xstrfmt("submodule.%s.url", info->sm_name);
+	config_set_in_gitmodules_file_gently(key, info->repo);
+	free(key);
+	key = xstrfmt("submodule.%s.branch", info->sm_name);
+	if (info->branch)
+		config_set_in_gitmodules_file_gently(key, info->branch);
+	free(key);
+
+	cp2.git_cmd = 1;
+	strvec_pushl(&cp2.args, "add", "--force", NULL);
+	strvec_pushl(&cp2.args, "--", ".gitmodules", NULL);
+
+	if (run_command(&cp2))
+		die(_("Failed to register submodule '%s'"), info->sm_path);
 
 	/*
 	 * NEEDSWORK: In a multi-working-tree world, this needs to be
